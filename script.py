@@ -1,17 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request
-import pokebase as pb
 import requests
 
 app = Flask(__name__)
-
-# import requests
-#
-# url = 'https://pokeapi.co/api/v2/'
-# res = requests.get(url)
-# json = res.json()
-# print(json['results'])
-# # print(res)
-
 
 def get_pokemon_list(url, limit=10, offset=0):
 	base_url = url
@@ -23,22 +13,22 @@ def get_pokemon_list(url, limit=10, offset=0):
 		data = response.json()
 		return data["results"]
 	else:
-		print("Не удалось получить список покемонов.")
+		print("Не удалось получить список покемонов")
 		return []
 
 
 url = 'https://pokeapi.co/api/v2/pokemon'
 res = requests.get(url)
 data = res.json()
-limit = data["count"] # Количество покемонов для получения
-offset = 0 # Начальное смещение списка
+limit = data["count"]
+offset = 0
 
 pokemon_list = get_pokemon_list(url, limit, offset)
 name_list = []
 if pokemon_list:
-	print("Список покемонов:")
+	# print("Список покемонов:")
 	for index, pokemon in enumerate(pokemon_list, start=offset + 1):
-		print(f"{index}. {pokemon['name']}")
+		# print(f"{index}. {pokemon['name']}")
 		name_list.append(pokemon['name'])
 
 pokemon_name = ''
@@ -63,7 +53,7 @@ def search():
 
 @app.route('/')
 def index():
-    return render_template('index.html', name_list = name_list, search_string=pokemon_name)
+    return render_template('index.html', name_list = name_list, search_string = pokemon_name)
 
 if __name__ == '__main__':
     app.run()
