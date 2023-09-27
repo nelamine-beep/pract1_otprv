@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<style>
+
+		form {
+		width:400px;
+		}
+		input{
+		padding:4px 10px;
+		border:0;
+		font-size:16px;
+		}
+		.search {
+		width: 75%;
+		}
+		.submit{
+		width: 70px;
+		background-color: #1c87c9;
+		color:#ffffff;
+		}
+	  </style>
+</head>
+<body>
+	<h1>Pokemone Names</h1>
+	<form action="/search" method="post" enctype="multipart/form-data">
+		<input type="text" name="search_string" value="{{ search_string }}" class="form-control" placeholder="Search...">
+		<button class="btn" type="submit">Search</button>
+	</form>
+	<ul>
+		{% for name in name_list %}
+		<li>{{name}}</li>
+		{% endfor %}
+	</ul>
+
+</body>
+</html>
