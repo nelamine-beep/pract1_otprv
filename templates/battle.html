@@ -1,21 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Battle</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
+{% extends 'main.html' %}
+{% block content %}
     <div class="container">
-        <h1>Battle Page</h1>
-        <h2>Chosen Pokemon</h2>
+        <h1>Битва</h1>
+        <h2>Твой покемон</h2>
         <img src="{{ chosen_pokemon['image_url'] }}" alt="{{ chosen_pokemon['name'] }}">
-        <p>Health: <span id="yourPokemonHealth">{{ chosen_pokemon['health'] }}</span></p>
-        <p>Attack: <span id="yourPokemonAttack">{{ chosen_pokemon['attack'] }}</span></p>
+        <p>Имя: <span id="opponentPokemonName">{{ chosen_pokemon['name'] }}</span></p>
+        <p>Здоровье: <span id="yourPokemonHealth">{{ chosen_pokemon['health'] }}</span></p>
+        <p>Атака: <span id="yourPokemonAttack">{{ chosen_pokemon['attack'] }}</span></p>
     
-        <h2>Opponent Pokemon</h2>
+        <h2>Покемон-противник</h2>
         <img src="{{ random_pokemon['image_url'] }}" alt="{{ random_pokemon['name'] }}">
-        <p>Health: <span id="opponentPokemonHealth">{{ random_pokemon['health'] }}</span></p>
-        <p>Attack: <span id="opponentPokemonAttack">{{ random_pokemon['attack'] }}</span></p>
+        <p>Имя: <span id="opponentPokemonName">{{ random_pokemon['name'] }}</span></p>
+        <p>Здоровье: <span id="opponentPokemonHealth">{{ random_pokemon['health'] }}</span></p>
+        <p>Атака: <span id="opponentPokemonAttack">{{ random_pokemon['attack'] }}</span></p>
     
         <label for="userInput">Enter a number (1-10): </label>
         <input type="number" id="userInput" name="userInput" min="1" max="10" required>
@@ -151,5 +148,4 @@
         document.getElementById("makeMoveButton").addEventListener("click", makeMove);
         document.getElementById("quickBattleButton").addEventListener("click", quickBattle);
     </script>
-</body>
-</html>
+{% endblock %}

@@ -1,29 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Покемоны</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
+{% extends 'main.html' %}
+{% block content %}
+{{ super() }}
     <div class="container">
         <h1>Список покемонов</h1>
         <form action="/" method="get">
             <label for="search">Поиск покемонов:</label>
-            <input type="text" name="search" id="search" placeholder="Enter Pokemon Name">
-            <button type="submit">Search</button>
+            <input type="text" name="search_string" value="{{ search_string }}" id="search" placeholder="Введите имя покемона...">
+            <button type="submit">Поиск</button>
         </form>
         <div class="list">
-            {% for pokemon in pokemon_data %}
+            {% for pokemon in pokemons %}
                 <div class="card">
-                    <a href="/pokemon/{{ pokemon['name'] }}">
-                        <h2>{{ pokemon['name'] }}</h2>
-                        <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}">
+                    <a href="{{url_for('pokemon_page', name=pokemon.name)}}">
+                        <h2>{{ pokemon.name }}</h2>
+                        <img src="{{ pokemon.image_url }}" alt="{{ pokemon.name }}">
                     </a>
-                    <p>Здоровье: {{ pokemon['health'] }}</p>
-                    <p>Атака: {{ pokemon['attack'] }}</p>
-                    <form action="/battle/{{ pokemon['name'] }}" target="_blank">
+                    <p>Здоровье: {{ pokemon.health }}</p>
+                    <p>Атака: {{ pokemon.attack }}</p>
+                    <form action="/battle/{{ pokemon.name }}" target="_blank">
                         <button class="choose">Выбрать</button>
                     </form>
                 </div>
@@ -41,6 +35,4 @@
             <a href="?page={{ page + 1 }}&limit={{ limit }}">Следующая</a>
         </div>
     </div>
-    
-</body>
-</html>
+{% endblock %}

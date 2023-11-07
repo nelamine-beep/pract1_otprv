@@ -1,20 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ name }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
+{% extends 'main.html' %}
+{% block content %}
+{{ super() }}
     <div class="container">
-        <h1>{{ name }}</h1>
-        <img src="{{ image_url }}" alt="{{ name }}">
-        <p>Health: {{ health }}</p>
-        <p>Attack: {{ attack }}</p>
-        <p>Species: {{ species }}</p>
-        <p>Gender: {{ gender }}</p>
-        <p>Color: {{ color }}</p>
-        <a href="/battle/{{ name }}">Выбрать</a>
-        <a href="/">Back to Pokemons</a>
+        <h1>{{poke.name}}</h1>
+        <img src="{{poke.image_url}}" alt="{{poke.name}}">
+        <p>Здоровье: {{poke.health}}</p>
+        <p>Атака: {{poke.attack}}</p>
+        <p>Species: {{ poke.species }}</p>
+        <p>Gender: {{ poke.gender }}</p>
+        <p>Color: {{ poke.color }}</p>
+        <a href="/battle/{{ poke.name }}">Выбрать</a>
+        <a href="/">Вернуться на главную</a>
     </div>
-</body>
-</html>
+{% endblock %}
