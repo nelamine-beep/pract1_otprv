@@ -1,43 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-	<meta charset="UTF-8">
+    <meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Document</title>
-	<style>
-		body {
-			background-color: aliceblue;
-			margin: 10px 100px;
-		}
-		form {
-			width:400px;
-		}
-		input{
-			padding:4px 10px;
-			border:0;
-			font-size:16px;
-		}
-		.search {
-			width: 75%;
-		}
-		.btn{
-			width: 70px;
-			background-color: #1a5479;
-			color:#ffffff;
-			border-radius: 5px;
-		}
-	  </style>
+    <title>Покемоны</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-	<h1>Pokemone Names</h1>
-	<form action="/search" method="post" enctype="multipart/form-data">
-		<input type="text" name="search_string" value="{{ search_string }}" class="form-control" placeholder="Search...">
-		<button class="btn" type="submit">Search</button>
-	</form>
-	<ul>
-		{% for name in name_list %}
-		<li>{{name}}</li>
-		{% endfor %}
-	</ul>
+    <div class="container">
+        <h1>Список покемонов</h1>
+        <form action="/" method="get">
+            <label for="search">Поиск покемонов:</label>
+            <input type="text" name="search" id="search" placeholder="Enter Pokemon Name">
+            <button type="submit">Search</button>
+        </form>
+        <div class="list">
+            {% for pokemon in pokemon_data %}
+                <div class="card">
+                    <a href="/pokemon/{{ pokemon['name'] }}">
+                        <h2>{{ pokemon['name'] }}</h2>
+                        <img src="{{ pokemon['image_url'] }}" alt="{{ pokemon['name'] }}">
+                    </a>
+                    <p>Здоровье: {{ pokemon['health'] }}</p>
+                    <p>Атака: {{ pokemon['attack'] }}</p>
+                    <form action="/battle/{{ pokemon['name'] }}" target="_blank">
+                        <button class="choose">Выбрать</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+        <ul>
+            
+        </ul>
+
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="?page={{ page - 1 }}&limit={{ limit }}">Предыдущая</a>
+            {% endif %}
+            <span>Страница {{ page }}</span>
+            <a href="?page={{ page + 1 }}&limit={{ limit }}">Следующая</a>
+        </div>
+    </div>
+    
 </body>
 </html>

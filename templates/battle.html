@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Battle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Battle Page</h1>
+        <h2>Chosen Pokemon</h2>
+        <img src="{{ chosen_pokemon['image_url'] }}" alt="{{ chosen_pokemon['name'] }}">
+        <p>Health: <span id="yourPokemonHealth">{{ chosen_pokemon['health'] }}</span></p>
+        <p>Attack: <span id="yourPokemonAttack">{{ chosen_pokemon['attack'] }}</span></p>
+    
+        <h2>Opponent Pokemon</h2>
+        <img src="{{ random_pokemon['image_url'] }}" alt="{{ random_pokemon['name'] }}">
+        <p>Health: <span id="opponentPokemonHealth">{{ random_pokemon['health'] }}</span></p>
+        <p>Attack: <span id="opponentPokemonAttack">{{ random_pokemon['attack'] }}</span></p>
+    
+        <label for="userInput">Enter a number (1-10): </label>
+        <input type="number" id="userInput" name="userInput" min="1" max="10" required>
+        
+        <button id="makeMoveButton">Make Move</button>
+    
+        <button id="quickBattleButton">Quick Battle</button>
+    
+        <div id="battleInfo"></div>
+    
+        <a href="/">Back to Pokemons</a>
+    </div>
+
+    <script>
+        function makeMove() {
+            // Получаем введенное пользователем число
+            var userInput = parseInt(document.getElementById("userInput").value);
+            var opponentNumber = Math.floor(Math.random() * 10) + 1;
+            console.log(userInput);
+            // Проверяем, что введенное число находится в диапазоне от 1 до 10
+            if (userInput > 0 && userInput < 11) {
+                 // Отнимаем атаку от здоровья противника
+            var opponentHealth = parseInt(document.getElementById("opponentPokemonHealth").innerText);
+            var opponentAttack = parseInt(document.getElementById("opponentPokemonAttack").innerText);
+            var yourHealth = parseInt(document.getElementById("yourPokemonHealth").innerText);
+            var yourAttack = parseInt(document.getElementById("yourPokemonAttack").innerText);
+            if (userInput % 2 === opponentNumber % 2) {
+                opponentHealth -= yourAttack;
+                document.getElementById("opponentPokemonHealth").innerText = opponentHealth;
+                // Проверяем, осталось ли здоровье у противника
+                if (opponentHealth <= 0) {
+                    var battleInfo = document.getElementById("battleInfo");
+                    var result = "You win! Opponent's Pokemon fainted!";
+                    var resultNode = document.createElement("div");
+                    resultNode.innerText = result;
+                    battleInfo.appendChild(resultNode);
+                    document.getElementById("makeMoveButton").disabled = true;
+                } else {
+                    var battleInfo = document.getElementById("battleInfo");
+                    var result = "Your Pokemon attacked! Opponent's health: " + opponentHealth;
+                    var resultNode = document.createElement("div");
+                    resultNode.innerText = result;
+                    battleInfo.appendChild(resultNode);
+                    // Атак противника (логика на сервере) и обновление информации о бое
+                }
+            }
+            else {
+                yourHealth -= opponentAttack;
+                document.getElementById("yourPokemonHealth").innerText = yourHealth;
+                if (yourHealth <= 0) {
+                    var battleInfo = document.getElementById("battleInfo");
+                    var result = "Opponent win! Your's Pokemon fainted!";
+                    var resultNode = document.createElement("div");
+                    resultNode.innerText = result;
+                    battleInfo.appendChild(resultNode);
+                    document.getElementById("makeMoveButton").disabled = true;
+                } else {
+                    var battleInfo = document.getElementById("battleInfo");
+                    var result = "Opponent Pokemon attacked! Your's health: " + yourHealth;
+                    var resultNode = document.createElement("div");
+                    resultNode.innerText = result;
+                    battleInfo.appendChild(resultNode);
+                    // Атак противника (логика на сервере) и обновление информации о бое
+                }
+            }
+                
+            }
+            else {
+                alert("Please enter a number between 1 and 10.");
+                return;
+            }
+           
+            
+        }
+
+        // Функция для быстрого боя
+        function quickBattle() {
+            // Генерируем случайные числа для пользователя и противника
+            var userNumber = Math.floor(Math.random() * 10) + 1;
+            var opponentNumber = Math.floor(Math.random() * 10) + 1;
+            var opponentHealth = parseInt(document.getElementById("opponentPokemonHealth").innerText);
+            var opponentAttack = parseInt(document.getElementById("opponentPokemonAttack").innerText);
+            var yourHealth = parseInt(document.getElementById("yourPokemonHealth").innerText);
+            var yourAttack = parseInt(document.getElementById("yourPokemonAttack").innerText);
+            // Логика для определения победителя
+            if (userNumber % 2 === opponentNumber % 2) {
+                // Атакует покемон пользователя
+                yourPokemonHealth -= opponentAttack;
+                var yourPokemonHealth = parseInt(document.getElementById("yourPokemonHealth").innerText);
+                document.getElementById("yourPokemonHealth").innerText = yourPokemonHealth;
+                if (yourHealth <= 0) {
+                    var battleInfo = document.getElementById("battleInfo");
+                    var result = "Opponent win! Your's Pokemon fainted!";
+                    var resultNode = document.createElement("div");
+                    resultNode.innerText = result;
+                    battleInfo.appendChild(resultNode);
+                    document.getElementById("quickBattleButton").disabled = true;
+                } else {
+                    var battleInfo = document.getElementById("battleInfo");
+                    var result = "Opponent Pokemon attacked! Your's health: " + yourHealth;
+                    var resultNode = document.createElement("div");
+                    resultNode.innerText = result;
+                    battleInfo.appendChild(resultNode);
+                    // Атак противника (логика на сервере) и обновление информации о бое
+                }
+            } else {
+                // Атакует покемон противника
+                var opponentHealth = parseInt(document.getElementById("opponentPokemonHealth").innerText);
+                opponentHealth -= yourAttack;
+                document.getElementById("opponentPokemonHealth").innerText = opponentHealth;
+                if (opponentHealth <= 0) {
+                    var battleInfo = document.getElementById("battleInfo");
+                    var result = "You win! Opponent's Pokemon fainted!";
+                    var resultNode = document.createElement("div");
+                    resultNode.innerText = result;
+                    battleInfo.appendChild(resultNode);
+                    document.getElementById("quickBattleButton").disabled = true;
+                } else {
+                    var battleInfo = document.getElementById("battleInfo");
+                    var result = "Your Pokemon attacked! Opponent's health: " + opponentHealth;
+                    var resultNode = document.createElement("div");
+                    resultNode.innerText = result;
+                    battleInfo.appendChild(resultNode);
+                    // Атак противника (логика на сервере) и обновление информации о бое
+                }
+            }
+
+            // Показываем результат в поле "battleInfo"
+            document.getElementById("battleInfo").innerText = battleResult;
+        }
+
+        // Привязываем функции к кнопкам
+        document.getElementById("makeMoveButton").addEventListener("click", makeMove);
+        document.getElementById("quickBattleButton").addEventListener("click", quickBattle);
+    </script>
+</body>
+</html>

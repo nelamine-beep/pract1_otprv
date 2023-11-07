@@ -1,0 +1,35 @@
+body {
+    background-color: gainsboro;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+.container {
+    width: 1200px;
+    margin: 10px auto;
+}
+
+.card {
+    background-color: aliceblue;
+    width: 200px;
+    margin: 10px 10px;
+    text-align: center;
+}
+
+.list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content:center;
+}
+
+.choose {
+    padding: 5px;
+    margin: 5px;
+    background-color:khaki;
+}
+
+.pagination {
+    text-align: center;
+    background-color: aliceblue;
+    padding: 15px 10px;
+    margin: 10px auto;
+}
