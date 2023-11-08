@@ -1,2 +1,8 @@
 
 __pycache__
+config.json
+migrations
+venv
+env
+
+send_email.py

@@ -4,7 +4,7 @@ import requests, random
 
 api = Blueprint('api', __name__, template_folder='templates')
 
-@api.route('/api/v1/pokemon/<id>', methods=['GET'])
+@api.route('/api/v2/pokemon/<id>', methods=['GET'])
 def api_pokemon_from_id(id):
     if id:
         url = f"https://pokeapi.co/api/v2/pokemon/{id}/"
@@ -37,7 +37,7 @@ def api_pokemon_from_id(id):
     return make_response({'error': 'Not Found'}, 404)
 
 
-@api.route('/api/v1/pokemon/random', methods=['GET'])
+@api.route('/api/v2/pokemon/random', methods=['GET'])
 def api_pokemon_random():
     url = f"https://pokeapi.co/api/v2/pokemon/?limit=1"
     response = requests.get(url)
@@ -49,41 +49,175 @@ def api_pokemon_random():
     else:
         return make_response({'error': 'Not Found'}, 404)
 
-@api.route('/api/v1/pokemon/list', methods=['GET'])
+@api.route('/api/v2/pokemon/list', methods=['GET'])
 def api_pokemon_list():
     page = request.args.get('page', default=1, type=int)
     limit = request.args.get('limit', default=10, type=int)
     search_string = request.args.get('search_string', '').strip()
-
     offset = (page - 1) * limit
-    url = f"https://pokeapi.co/api/v2/pokemon?offset={offset}&limit={limit}"
-    response = requests.get(url)
 
-    if response.status_code == 200:
+    # Получите общее количество покемонов (без учета фильтра по имени)
+    url = "https://pokeapi.co/api/v2/pokemon/"
+    total_pokemon_response = requests.get(url)
+    if total_pokemon_response.status_code != 200:
+        return make_response({'error': 'Not Found'}, 404)
+    total_pokemon_data = total_pokemon_response.json()
+    total_pokemon_count = total_pokemon_data['count']
+
+    # Фильтрация по имени, если задан поисковый запрос
+    if search_string:
+        url = f"https://pokeapi.co/api/v2/pokemon/?limit={total_pokemon_count}"
+        response = requests.get(url)
+        if response.status_code != 200:
+            return make_response({'error': 'Not Found'}, 404)
+        data = response.json()
+        poke_list = [pkm for pkm in data.get('results', []) if search_string in pkm['name']]
+    else:
+        url = f"https://pokeapi.co/api/v2/pokemon?offset={offset}&limit={limit}"
+        response = requests.get(url)
+        if response.status_code != 200:
+            return make_response({'error': 'Not Found'}, 404)
         data = response.json()
         poke_list = data.get('results', [])
-        poke_count = data['count']
-        page_count = (poke_count + limit - 1) // limit
 
-        if search_string != '':
-            url = f"https://pokeapi.co/api/v2/pokemon?limit={poke_count}"
-            response = requests.get(url)
+    # Вычисление общего количества страниц
+    page_count = (total_pokemon_count + limit - 1) // limit
 
-            if response.status_code == 200:
-                data = response.json()
-                poke_list = data.get('results', [])
-                poke_list = [pkm for pkm in poke_list if search_string in pkm['name']]
-                page_count = (len(poke_list) + limit - 1) // limit
-                poke_list = poke_list[offset:offset + limit]
-            else:
-                return make_response({'error': 'Not Found'}, 404)
+    # Формирование данных для отображения
+    poke_list_data = []
+    for pkm in poke_list:
+        pkm_name = pkm['name']
+        pkm_data = api_pokemon_from_id(pkm_name).json
+        poke_list_data.append(pkm_data)
 
-        poke_list_data = []
+    return make_response({'page_count': page_count, 'list': poke_list_data}, 200)
 
-        for pkm in poke_list:
-            pkm_name = pkm['name']
-            pkm_data = api_pokemon_from_id(pkm_name).json
-            poke_list_data.append(pkm_data)
-        return make_response({'page_count': page_count, 'list': poke_list_data}, 200)
+@api.route('/api/v1/fight', methods=['GET'])
+def api_fight():
+    select_poke_id = request.args.get('select_poke_id')
+    opponent_poke_id = request.args.get('opponent_poke_id')
+    if select_poke_id and select_poke_id.isdigit() and opponent_poke_id and opponent_poke_id.isdigit():
+        select_poke_info = api_pokemon_from_id(select_poke_id).json if api_pokemon_from_id(select_poke_id).status_code == 200 else None
+        opponent_poke_info = api_pokemon_from_id(opponent_poke_id).json if api_pokemon_from_id(opponent_poke_id).status_code == 200 else None
+        
+        if select_poke_info and opponent_poke_info:
+            result = {
+                'select_poke': select_poke_info,
+                'opponent_poke': opponent_poke_info,
+            }
+            return make_response(result, 200)
+        else:
+            return make_response({'error': 'Not Found'}, 404)
     else:
-        return make_response({'error': 'Not Found'}, 404)
+        return make_response({'error': 'Bad Request'}, 400)
+@api.route('/api/v1/fight/<int:select_number>', methods=['POST'])
+def api_fight_round(select_number):
+    select_poke = request.json['select_poke']
+    opponent_poke = request.json['opponent_poke']
+    if select_poke and opponent_poke and select_number > 0 and select_number < 11:
+        if {'id', 'health', 'attack'}.issubset(set(select_poke)) and {'id', 'health', 'attack'}.issubset(set(opponent_poke)):
+            select_poke_hp = select_poke['health']
+            opponent_poke_hp = opponent_poke['health']
+            round_winner_id = None
+            
+            # get random number opponent
+            opponent_number = random.randint(1, 10)
+            # attack logic
+            if select_poke_hp > 0 and opponent_poke_hp > 0:
+                if select_number % 2 == opponent_number % 2:
+                    opponent_poke_hp -= select_poke['attack']
+                    round_winner_id = select_poke['id']
+                else:
+                    select_poke_hp -= opponent_poke['attack']
+                    round_winner_id = opponent_poke['id']
+            # checking winner battle
+            winner = None
+            if select_poke_hp <= 0:
+                winner = opponent_poke['id']
+            elif opponent_poke_hp <= 0:
+                winner = select_poke['id']
+            # result round
+            result = {
+                'select_poke': {
+                    'id': select_poke['id'],
+                    'health': select_poke_hp,
+                    'attack': select_poke['attack'],
+                },
+                'opponent_poke': {
+                    'id': opponent_poke['id'],
+                    'health': opponent_poke_hp,
+                    'attack': opponent_poke['attack'],
+                },
+                'round': {
+                    'winner_id': round_winner_id,
+                    'select_number': select_number,
+                    'opponent_number': opponent_number,
+                    'select_poke_hp': select_poke_hp,
+                    'opponent_poke_hp': opponent_poke_hp,
+                },
+                'winner': winner,
+            }
+            return make_response(result, 200)  
+    return make_response({'error': 'Bad Request'}, 400)
+    
+
+@api.route('/api/v1/fight/fast', methods=['GET'])
+def api_fight_fast():
+    select_poke_id = request.args.get('select_poke_id')
+    opponent_poke_id = request.args.get('opponent_poke_id')
+    if select_poke_id and select_poke_id.isdigit() and opponent_poke_id and opponent_poke_id.isdigit():
+        select_poke_info = api_pokemon_from_id(select_poke_id).json if api_pokemon_from_id(select_poke_id).status_code == 200 else None
+        opponent_poke_info = api_pokemon_from_id(opponent_poke_id).json if api_pokemon_from_id(opponent_poke_id).status_code == 200 else None
+
+        if select_poke_info and opponent_poke_info:
+            select_poke_hp = select_poke_info['health']
+            opponent_poke_hp = opponent_poke_info['health']
+            rounds = []
+
+            # start new rounds until a winner is found
+            while select_poke_hp > 0 and opponent_poke_hp > 0:
+                select_number = random.randint(1, 10)
+                url = f'{request.host_url}/api/v1/fight/{select_number}'
+                response = requests.post(url, json={
+                    'select_poke': {
+                        'id': select_poke_info['id'],
+                        'health': select_poke_hp,
+                        'attack': select_poke_info['attack'],
+                    },
+                    'opponent_poke': {
+                        'id': opponent_poke_info['id'],
+                        'health': opponent_poke_hp,
+                        'attack': opponent_poke_info['attack'],
+                    },
+                })
+
+                if response.status_code == 200:
+                    select_poke_hp = response.json()['select_poke']['health']
+                    opponent_poke_hp = response.json()['opponent_poke']['health']
+                    winner = response.json()['winner']
+                    rounds.append(response.json()['round'])
+                else:
+                    return make_response({'error': 'Service Unavailable'}, 503)
+
+                if winner:
+                    break
+
+            result = {
+                'select_poke': {
+                    'id': select_poke_info['id'],
+                    'health': select_poke_hp,
+                    'attack': select_poke_info['attack'],
+                },
+                'opponent_poke': {
+                    'id': opponent_poke_info['id'],
+                    'health': opponent_poke_hp,
+                    'attack': opponent_poke_info['attack'],
+                },
+                'rounds': rounds,
+                'winner': winner,
+            }
+            return make_response(result, 200)  
+        else:
+            return make_response({'error': 'Not Found'}, 404)
+    else:
+        return make_response({'error': 'Bad Request'}, 400)

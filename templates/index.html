@@ -17,8 +17,9 @@
                     </a>
                     <p>Здоровье: {{ pokemon.health }}</p>
                     <p>Атака: {{ pokemon.attack }}</p>
-                    <form action="/battle/{{ pokemon.name }}" target="_blank">
-                        <button class="choose">Выбрать</button>
+                    <form action="{{url_for('battle')}}" method="post" enctype="multipart/form-data" target="_blank">
+                        <input type="hidden" name="select_poke_id" value="{{pokemon.id}}">
+                        <button class="choose" type="submit">Выбрать</button>
                     </form>
                 </div>
             {% endfor %}
@@ -29,10 +30,12 @@
 
         <div class="pagination">
             {% if page > 1 %}
-                <a href="?page={{ page - 1 }}&limit={{ limit }}">Предыдущая</a>
+                <a href="?page={{ page - 1 }}&limit={{ limit }}&search_string={{ search_string }}">Предыдущая</a>
             {% endif %}
-            <span>Страница {{ page }}</span>
-            <a href="?page={{ page + 1 }}&limit={{ limit }}">Следующая</a>
+                <span>Страница {{ page }}</span>
+            {% if page < end %}
+                <a href="?page={{ page + 1 }}&limit={{ limit }}&search_string={{ search_string }}">Следующая</a>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
