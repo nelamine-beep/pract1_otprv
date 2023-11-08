@@ -11,7 +11,11 @@
         <p>Color: {{ poke.color }}</p>
         <form class="choose" action="{{url_for('battle')}}" method="post" enctype="multipart/form-data">
             <input type="hidden" name="select_poke_id" value="{{poke.id}}">
-            <button type="submit">Выбрать</button>
+            <button type="submit">Выбрать для боя</button>
+        </form>
+        <form class="choose" action="{{url_for('pokemon_page_save')}}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="poke_id" value="{{poke.id}}">
+            <button type="submit">Сохранить в файл</button>
         </form>
         <a href="/">Вернуться на главную</a>
     </div>

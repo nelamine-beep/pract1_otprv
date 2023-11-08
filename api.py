@@ -1,8 +1,13 @@
 from flask import Blueprint, make_response, request
-
-import requests, random
+import json, requests, random, io, ftplib
+from datetime import date
 
 api = Blueprint('api', __name__, template_folder='templates')
+
+with open('config.json', 'r') as file:
+    data=file.read()
+    configs = json.loads(data)
+
 
 @api.route('/api/v2/pokemon/<id>', methods=['GET'])
 def api_pokemon_from_id(id):
@@ -221,3 +226,36 @@ def api_fight_fast():
             return make_response({'error': 'Not Found'}, 404)
     else:
         return make_response({'error': 'Bad Request'}, 400)
+    
+
+@api.route('/api/v1/pokemon/save/<int:id>', methods=['POST'])
+def api_pokemon_save_from_id(id):
+    poke_info = api_pokemon_from_id(id).json if api_pokemon_from_id(id).status_code == 200 else None
+    if poke_info:
+        folder_name = str(date.today()).replace('-', '').strip()
+        text_markdown = f"# {poke_info['name']}\n\n### Poke Information:\n- hp: {poke_info['health']}\n- attack: {poke_info['attack']}\n"
+        byte_text_markdown = text_markdown.encode('utf-8')
+
+        try:
+            ftp = ftplib.FTP(host=configs['FTP_HOST'])
+            ftp.login(user=configs['FTP_USER'], passwd=configs['FTP_PASSWORD'])
+
+            files = ftp.nlst()
+            if folder_name not in files:
+                ftp.mkd(folder_name)
+            ftp.cwd(folder_name)
+            ftp.storbinary(f"STOR {poke_info['name']}.md", io.BytesIO(byte_text_markdown))
+            # print(f"FTP Host: {configs['FTP_HOST']}")
+            # print(f"FTP User: {configs['FTP_USER']}")
+            # print(f"FTP Password: {configs['FTP_PASSWORD']}")
+            # print(f"Folder Name: {folder_name}")
+            # print(f"Text Markdown: {text_markdown}")
+
+            return make_response({'result': 'file was successfully generated and saved',
+                                  'poke_name': poke_info['name']}, 201) 
+        except:
+            return make_response({'error': 'Service Unavailable',
+                                  'poke_name': poke_info['name']}, 503)
+        finally:
+            ftp.quit()
+    return make_response({'error': 'Bad Request'}, 400)

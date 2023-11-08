@@ -1,6 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, session, abort
-import requests
-import random
+from flask import Flask, render_template, request, redirect, url_for, session, abort, flash
+import requests, ftplib
 from send_email import *
 from api import api
 import sqlite3 as sl
@@ -45,7 +44,22 @@ def pokemon_page(name):
         return render_template('pokemon.html', poke=response.json())
     else:
         return "Pokemon not found", 404
-    
+
+@app.route('/poke/save', methods=['GET', 'POST'])
+def pokemon_page_save():
+    if request.method == 'POST' and 'poke_id' in request.form:
+        poke_id = request.form['poke_id']
+        if poke_id.isdigit():
+            response = requests.post(f'{request.host_url}/api/v1/pokemon/save/{poke_id}')  
+            if response.status_code == 201:
+                flash('File with info about Poke was successfully generated and saved.', 'info')
+                print(response.json())
+                return redirect(url_for('pokemon_page', name=response.json()['poke_name']))
+            elif response.status_code == 503:
+                flash('File with info about Poke was not generated and saved.', 'error')
+                return redirect(url_for('pokemon_page', name=response.json()['poke_name']))
+    return redirect(url_for('pokemon'))
+
 @app.route('/battle', methods=['GET', 'POST'])
 def battle():
     if request.method == 'POST' and 'select_poke_id' in request.form:
@@ -138,10 +152,6 @@ def battle_round():
                                     select_poke=select_poke_info, 
                                     opponent_poke=opponent_poke_info)
     return redirect(url_for('pokemon'))
-def is_valid_email(email):
-    regex = r'\b[A-Za-z0-9._-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
-    return True if re.fullmatch(regex, email) else False
-
 
 def results_battle_to_string(select_poke, opponent_poke, rounds, winner):
     res = f'\nBATTLE {select_poke["name"]} VS {opponent_poke["name"]}\nRESULT: {select_poke["name"] if winner == select_poke["id"] else opponent_poke["name"]} wins.\n\nROUNDS:'
@@ -149,7 +159,6 @@ def results_battle_to_string(select_poke, opponent_poke, rounds, winner):
         round_winner = select_poke["name"] if round['winner_id'] == select_poke["id"] else opponent_poke["name"]
         res += f'\n\n#{i+1}: WIN {round_winner}\nY-N={round["select_number"]}   Y-HP={round["select_poke_hp"]}   O-N={round["opponent_number"]}   O-HP={round["opponent_poke_hp"]}'
     return res + '\n\n'
-
 
 @app.route('/battle/fast', methods=['GET', 'POST'])
 def fast_battle():
@@ -172,8 +181,7 @@ def fast_battle():
                 session['opponent_poke_health'] = response.json()['opponent_poke']['health']
                 rounds = response.json()['rounds']
                 winner = response.json()['winner']
-                
-                # record result of the battle to db
+
                 try:
                     battle = BattleResult(user_id=session['select_poke_id'],
                                         opponent_id=session['opponent_poke_id'],
