@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, abort, flash
+from flask_caching import Cache
 import requests, ftplib
 from send_email import *
 from api import api
@@ -6,6 +7,7 @@ import sqlite3 as sl
 from db import *
 import re
 import logging
+import redis
 
 
 app = Flask(__name__)
@@ -17,8 +19,18 @@ with open('config.json', 'r') as file:
     data=file.read()
 configs = json.loads(data)
 app.config['SECRET_KEY'] = configs['SECRET_KEY']
+app.config['SECRET_KEY'] = configs['SECRET_KEY']
+app.config['CACHE_TYPE'] = configs['CACHE_TYPE']
+app.config['CACHE_REDIS_HOST'] = configs['CACHE_REDIS_HOST']
+app.config['CACHE_REDIS_PORT'] = configs['CACHE_REDIS_PORT']
+app.config['CACHE_REDIS_DB'] = configs['CACHE_REDIS_DB']
+
+cache = Cache(app=app)  
+cache.init_app(app)
+
 
 @app.route('/')
+@cache.cached(timeout=60, key_prefix='pokemons', query_string=True)
 def pokemon():
     page = request.args.get('page')
     page = int(page) if page and page.isdigit() else 1
@@ -38,6 +50,7 @@ def pokemon():
                                 end=0)
 
 @app.route('/pokemon/<string:name>')
+@cache.cached(timeout=60, key_prefix='pokemon_info', query_string=True)
 def pokemon_page(name):
     response = requests.get(f'{request.host_url}/api/v2/pokemon/{name}')
     if response.status_code == 200:
@@ -64,10 +77,8 @@ def pokemon_page_save():
 def battle():
     if request.method == 'POST' and 'select_poke_id' in request.form:
         select_poke_id = request.form['select_poke_id']
-        # clear old data about battle 
         session.clear()
         print('select_poke_id', select_poke_id)
-        # get randow opponent poke & info about select and opponent poke
         response = requests.get(f'{request.host_url}/api/v2/pokemon/random')
         if response.status_code == 200:
             opponent_poke_id = response.json()['id']
@@ -91,19 +102,15 @@ def battle():
 def battle_round():
     if request.method == 'POST' and 'select_number' in request.form:
         select_number = request.form['select_number']
-        # someone has already won, there are no more rounds
         if session['select_poke_health'] <= 0 or session['opponent_poke_health'] <= 0:
             return redirect(url_for('pokemon'))
-        # get info about select & opponent poke
         response = requests.get(f'{request.host_url}/api/v1/fight?select_poke_id={session["select_poke_id"]}&opponent_poke_id={session["opponent_poke_id"]}')
         if response.status_code == 200:
             select_poke_info = response.json()['select_poke']
             opponent_poke_info = response.json()['opponent_poke']
         else:
             abort(503)
-        # checking valid selected number (from user)
         if select_number.isdigit() and int(select_number) > 0 and int(select_number) < 11:
-            # next step & get new info about battle
             url = f'{request.host_url}/api/v1/fight/{select_number}'
             response = requests.post(url, json={
                 'select_poke': {
@@ -122,11 +129,9 @@ def battle_round():
                 session['select_poke_health'] = response.json()['select_poke']['health']
                 session['opponent_poke_health'] = response.json()['opponent_poke']['health']
                 winner = response.json()['winner']
-                # add info about round to history
                 if 'history' not in session:
                     session['history'] = []
                 session['history'].append(response.json()['round'])
-                # check if the battle is over 
                 if winner:
                     try:
                         battle = BattleResult(user_id=session['select_poke_id'],
@@ -164,10 +169,8 @@ def results_battle_to_string(select_poke, opponent_poke, rounds, winner):
 def fast_battle():
     if request.method == 'POST':
         if 'select_poke_id' in session and 'opponent_poke_id' in session:
-            # someone has already won, there are no more rounds
             if session['select_poke_health'] <= 0 or session['opponent_poke_health'] <= 0:
                 return redirect(url_for('pokemon'))
-            # get info about select & opponent poke
             response = requests.get(f'{request.host_url}/api/v1/fight?select_poke_id={session["select_poke_id"]}&opponent_poke_id={session["opponent_poke_id"]}')
             if response.status_code == 200:
                 select_poke_info = response.json()['select_poke']
@@ -207,14 +210,6 @@ def fast_battle():
             else:
                 abort(503)
     return redirect(url_for('pokemon'))
-# @app.route('/result-battes')
-# def result_battes():
-#     try:
-#         all_battles = BattleResult.query.order_by(BattleResult.created_at.desc()).all()
-#         return render_template('results.html',
-#                                 battles=all_battles)
-#     except:
-#         abort(503)
 
 if __name__ == '__main__':
     app.run(debug=True)

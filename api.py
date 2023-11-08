@@ -115,6 +115,7 @@ def api_fight():
             return make_response({'error': 'Not Found'}, 404)
     else:
         return make_response({'error': 'Bad Request'}, 400)
+    
 @api.route('/api/v1/fight/<int:select_number>', methods=['POST'])
 def api_fight_round(select_number):
     select_poke = request.json['select_poke']
@@ -135,7 +136,6 @@ def api_fight_round(select_number):
                 else:
                     select_poke_hp -= opponent_poke['attack']
                     round_winner_id = opponent_poke['id']
-            # checking winner battle
             winner = None
             if select_poke_hp <= 0:
                 winner = opponent_poke['id']
@@ -178,8 +178,6 @@ def api_fight_fast():
             select_poke_hp = select_poke_info['health']
             opponent_poke_hp = opponent_poke_info['health']
             rounds = []
-
-            # start new rounds until a winner is found
             while select_poke_hp > 0 and opponent_poke_hp > 0:
                 select_number = random.randint(1, 10)
                 url = f'{request.host_url}/api/v1/fight/{select_number}'
