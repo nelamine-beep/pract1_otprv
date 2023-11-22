@@ -33,3 +33,7 @@ body {
     padding: 15px 10px;
     margin: 10px auto;
 }
+
+img {
+    max-height: 75px;
+}

@@ -26,7 +26,7 @@ def api_pokemon_from_id(id):
             gender_rate = species_data['gender_rate']
             gender = "Male" if gender_rate == 0 else "Female" if gender_rate == 8 else "Both"
             color = species_data['color']['name']
-            image_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{data['id']}.png"
+            image_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/{data['id']}.svg"
             result = {
                             'id': data['id'],
                             'name': name, 
@@ -243,12 +243,6 @@ def api_pokemon_save_from_id(id):
                 ftp.mkd(folder_name)
             ftp.cwd(folder_name)
             ftp.storbinary(f"STOR {poke_info['name']}.md", io.BytesIO(byte_text_markdown))
-            # print(f"FTP Host: {configs['FTP_HOST']}")
-            # print(f"FTP User: {configs['FTP_USER']}")
-            # print(f"FTP Password: {configs['FTP_PASSWORD']}")
-            # print(f"Folder Name: {folder_name}")
-            # print(f"Text Markdown: {text_markdown}")
-
             return make_response({'result': 'file was successfully generated and saved',
                                   'poke_name': poke_info['name']}, 201) 
         except:
